@@ -1,15 +1,9 @@
-wrap = {}
-
-dofile(debug.getinfo(1).source:gsub('init%.lua$', 'types.lua'):gsub('^@', ''))
-
 local CInterface = {}
-wrap.CInterface = CInterface
 
 function CInterface.new()
    self = {}
    self.txt = {}
    self.registry = {}
-   self.argtypes = wrap.argtypes
    setmetatable(self, {__index=CInterface})
    return self
 end
@@ -308,4 +302,7 @@ function CInterface:__writecall(txt, args, cfuncname, cargs, argcreturned)
    end
    table.insert(txt, string.format('return %d;', nret))
 end
+
+return CInterface
+
 
