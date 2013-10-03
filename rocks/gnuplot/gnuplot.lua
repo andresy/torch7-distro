@@ -1,4 +1,3 @@
-
 require 'paths'
 
 local torchstyle = [[
