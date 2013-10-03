@@ -12,7 +12,6 @@ local code = [[
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
-#include "luaT.h"
 
 static const unsigned char luacode[] = {
 LUA_CODE
@@ -72,7 +71,7 @@ end
 local str = f:read('*all')
 f:close()
 
-function str2hex(str)
+local function str2hex(str)
    local n = 0
    local hexlines = {}
    local hexline = {}

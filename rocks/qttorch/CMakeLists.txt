@@ -16,6 +16,6 @@ IF(Torch_SOURCE_DIR)
   
   TARGET_LINK_LIBRARIES(libqttorch luaT TH)
   
-  ADD_TORCH_DOK(dok qttorch "QT Interface" "Torch Tensor interface" 6.)
+#  ADD_TORCH_DOK(dok qttorch "QT Interface" "Torch Tensor interface" 6.)
 
 ENDIF(Torch_SOURCE_DIR)
