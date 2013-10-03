@@ -140,7 +140,7 @@ Plot vector ` x ` using dots of first default `Gnuplot` type.
 x=torch.linspace(-2*math.pi,2*math.pi)
 gnuplot.plot(torch.sin(x))
 ```
-{{plot_x.png?400}}
+![](plot_x.png)
 
 In more general form, plot vector ` y vs x ` using the format
 specified. The possible entries of format string can be
@@ -157,7 +157,7 @@ specified. The possible entries of format string can be
 x=torch.linspace(-2*math.pi,2*math.pi)
 gnuplot.plot('Sin',x/math.pi,torch.sin(x),'|')
 ```
-{{plot_xyf.png?400}}
+![](plot_xyf.png)
 
 To plot multiple curves at a time, one can pass each plot struct in a table.
 
@@ -165,7 +165,7 @@ To plot multiple curves at a time, one can pass each plot struct in a table.
 x=torch.linspace(-2*math.pi,2*math.pi)
 gnuplot.plot({'Cos',x/math.pi,torch.cos(x),'~'},{'Sin',x/math.pi,torch.sin(x),'|'})
 ```
-{{plot_sincos.png?400}}
+![](plot_sincos.png)
 
 One can pass data with multiple columns and use custom gnuplot style strings too. When multi-column data
 is used, the first column is assumed to be the `x` values and the rest of the columns are separate `y` series.
@@ -179,7 +179,7 @@ yy=torch.cat(x,ym,2)
 yy=torch.cat(yy,yp,2)
 gnuplot.plot({yy,' filledcurves'},{x,yp,'lines ls 1'},{x,ym,'lines ls 1'},{x,y,'lines ls 1'})
 ```
-{{plot_filled.png?400}}
+![](plot_filled.png)
 
 <a name="gnuplot.surface.dok"/>
 ## Plotting 3D Surfaces ##
@@ -201,7 +201,7 @@ xx = torch.Tensor(x:size(1),x:size(1)):zero():addr(1,x,x)
 xx = xx*math.pi*6
 gnuplot.splot(torch.sin(xx))
 ```
-{{plot_splot.png?400}}
+![](plot_splot.png)
 
 It is also possible to specify the `x` and `y` locations of each
 point in `z` by `gnuplot.splot(x,y,z)`. In this `x` and `y` has
@@ -215,7 +215,7 @@ xx = torch.Tensor(x:size(1),x:size(1)):zero():addr(1,x,x)
 xx = xx*math.pi*2
 gnuplot.splot({torch.sin(xx)},{torch.sin(xx)+2})
 ```
-{{plot_splot2.png?400}}
+![](plot_splot2.png)
 
 <a name="gnuplot.image.dok"/>
 ## Plotting Matrices as Images ##
@@ -236,7 +236,7 @@ xx = torch.Tensor(x:size(1),x:size(1)):zero():addr(1,x,x)
 xx = xx*math.pi*6
 gnuplot.imagesc(torch.sin(xx),'color')
 ```
-{{plot_imagesc.png?400}}
+![](plot_imagesc.png)
 
 <a name="gnuplot.histogram.dok"/>
 ## Histograms ##
@@ -253,7 +253,7 @@ number of bins and only using values between `min` and `max`.
 ```lua
 gnuplot.hist(torch.randn(100000),100)
 ```
-{{plot_hist.png?400}}
+![](plot_hist.png)
 
 <a name="gnuplot.files.dok"/>
 ## Plotting Directly into Files ##
