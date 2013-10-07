@@ -67,8 +67,13 @@ FOREACH(LUAROCKS_FILE ${LUAROCKS_FILES})
 ENDFOREACH()
 
 CONFIGURE_FILE("src/luarocks/site_config.lua.in" "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/site_config.lua")
-CONFIGURE_FILE("src/luarocks/config.lua.in" "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/config.lua")
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/site_config.lua" DESTINATION "${Torch_INSTALL_LUA_PATH_SUBDIR}/luarocks")
+
+IF(WIN32)
+  CONFIGURE_FILE("src/luarocks/config.lua.in" "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/config.lua")
+ELSE()
+  CONFIGURE_FILE("src/luarocks/config.lua.win.in" "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/config.lua")
+ENDIF()
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/config.lua" DESTINATION "${Torch_INSTALL_LUAROCKS_SYSCONF_SUBDIR}")
 
 IF(WIN32)
