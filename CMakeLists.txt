@@ -10,6 +10,7 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake"
 
 INCLUDE(TorchPaths)
 INCLUDE(TorchPathsInit)
+INCLUDE(TorchCFlags)
 INCLUDE(TorchLua2exe)
 
 # Torch executables
