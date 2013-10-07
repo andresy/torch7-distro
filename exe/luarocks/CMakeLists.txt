@@ -20,7 +20,7 @@ IF(WIN32)
   SET(UNAME_M "x64")
   SET(SHEBANG
 "rem=rem --[[
-@setlocal&  set luafile="%~f0" & if exist "%~f0.bat" set luafile="%~f0.bat"
+@setlocal&  set luafile=\"%~f0\" & if exist \"%~f0.bat\" set luafile=\"%~f0.bat\"
 @${Torch_INSTALL_BIN}/torch-lua.exe %luafile% %*&  exit /b ]]")
 
 ELSE()
