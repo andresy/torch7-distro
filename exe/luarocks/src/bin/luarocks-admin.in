@@ -1,4 +1,4 @@
-#!@Torch_INSTALL_BIN@/torch-lua
+@SHEBANG@
 
 package.path = [[@Torch_INSTALL_LUA_PATH@/?.lua;@Torch_INSTALL_LUA_PATH@/?/init.lua;]]..package.path
 

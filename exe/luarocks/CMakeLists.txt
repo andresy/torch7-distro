@@ -1,30 +1,55 @@
-FIND_PACKAGE(Wget)
-FIND_PACKAGE(MD5)
+IF(WIN32)
 
-IF(NOT WGET_FOUND)
-  MESSAGE(FATAL_ERROR "Downloader wget not found")
-ENDIF()
+  SET(WINUTILS_DLL_FILES
+    winutils/7z.dll winutils/libeay32.dll winutils/libiconv2.dll
+    winutils/libintl3.dll winutils/libssl32.dll)
 
-IF(NOT MD5_FOUND)
-  MESSAGE(FATAL_ERROR "MD5 checker not found")
-ENDIF()
+  INSTALL(FILES ${WINUTILS_DLL_FILES} DESTINATION "${Torch_INSTALL_BIN_SUBDIR}")
+   
+  SET(WINUTILS_EXE_FILES
+    winutils/7z.exe winutils/chmod.exe winutils/cp.exe winutils/find.exe
+    winutils/ls.exe winutils/md5sum.exe winutils/mkdir.exe winutils/mv.exe
+    winutils/objdump.exe winutils/pwd.exe winutils/rm.exe
+    winutils/rmdir.exe winutils/test.exe winutils/uname.exe
+    winutils/wget.exe)
+  
+  INSTALL(PROGRAMS ${WINUTILS_EXE_FILES} DESTINATION "${Torch_INSTALL_BIN_SUBDIR}")
+    
+  SET(WGET_EXECUTABLE_NAME "wget")
+  SET(MD5_EXECUTABLE_NAME "md5sum")
+  SET(UNAME_M "x64")
+  SET(SHEBANG
+"rem=rem --[[
+@setlocal&  set luafile="%~f0" & if exist "%~f0.bat" set luafile="%~f0.bat"
+@${Torch_INSTALL_BIN}/torch-lua.exe %luafile% %*&  exit /b ]]")
 
-GET_FILENAME_COMPONENT(WGET_EXECUTABLE_NAME "${WGET_EXECUTABLE}" NAME)
-GET_FILENAME_COMPONENT(MD5_EXECUTABLE_NAME "${MD5_EXECUTABLE}" NAME)
+ELSE()
+  FIND_PACKAGE(Wget)
+  FIND_PACKAGE(MD5)
+  
+  IF(NOT WGET_FOUND)
+    MESSAGE(FATAL_ERROR "Downloader wget not found")
+  ENDIF()
+  
+  IF(NOT MD5_FOUND)
+    MESSAGE(FATAL_ERROR "MD5 checker not found")
+  ENDIF()
 
-IF(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
-  EXEC_PROGRAM(uname ARGS -m OUTPUT_VARIABLE UNAME_M RETURN_VALUE val)
-  IF("${val}" GREATER 0)
+  GET_FILENAME_COMPONENT(WGET_EXECUTABLE_NAME "${WGET_EXECUTABLE}" NAME)
+  GET_FILENAME_COMPONENT(MD5_EXECUTABLE_NAME "${MD5_EXECUTABLE}" NAME)
+
+  IF(CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
+    EXEC_PROGRAM(uname ARGS -m OUTPUT_VARIABLE UNAME_M RETURN_VALUE val)
+    IF("${val}" GREATER 0)
+      SET(UNAME_M ${CMAKE_SYSTEM_PROCESSOR})
+    ENDIF()
+  ELSE()
     SET(UNAME_M ${CMAKE_SYSTEM_PROCESSOR})
   ENDIF()
-ELSE()
-  SET(UNAME_M ${CMAKE_SYSTEM_PROCESSOR})
-ENDIF()
 
-CONFIGURE_FILE("src/luarocks/site_config.lua.in" "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/site_config.lua")
-CONFIGURE_FILE("src/luarocks/config.lua.in" "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/config.lua")
-CONFIGURE_FILE("src/bin/luarocks" "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks")
-CONFIGURE_FILE("src/bin/luarocks-admin" "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks-admin")
+  SET(SHEBANG "#!${Torch_INSTALL_BIN}/torch-lua")
+
+ENDIF()
 
 SET(LUAROCKS_FILES fs/unix/tools.lua fs/unix.lua fs/win32/tools.lua fs/win32.lua
   fs/lua.lua persist.lua list.lua require.lua repos.lua dir.lua make_manifest.lua
@@ -41,9 +66,19 @@ FOREACH(LUAROCKS_FILE ${LUAROCKS_FILES})
   INSTALL(FILES "src/luarocks/${LUAROCKS_FILE}" DESTINATION "${Torch_INSTALL_LUA_PATH_SUBDIR}/luarocks/${_subpath}")
 ENDFOREACH()
 
+CONFIGURE_FILE("src/luarocks/site_config.lua.in" "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/site_config.lua")
+CONFIGURE_FILE("src/luarocks/config.lua.in" "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/config.lua")
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/site_config.lua" DESTINATION "${Torch_INSTALL_LUA_PATH_SUBDIR}/luarocks")
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/luarocks/config.lua" DESTINATION "${Torch_INSTALL_LUAROCKS_SYSCONF_SUBDIR}")
-INSTALL(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks" DESTINATION "${Torch_INSTALL_BIN_SUBDIR}")
-INSTALL(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks-admin" DESTINATION "${Torch_INSTALL_BIN_SUBDIR}")
 
-#INSTALL(CODE "EXEC_PROGRAM(${Torch_INSTALL_BIN}/torch-rocks ARGS install https://raw.github.com/torch/rocks/master/torch-7.scm-0.rockspec)")
+IF(WIN32)
+  CONFIGURE_FILE("src/bin/luarocks.in" "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks.bat")
+  CONFIGURE_FILE("src/bin/luarocks-admin.in" "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks-admin.bat")
+  INSTALL(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks.bat" DESTINATION "${Torch_INSTALL_BIN_SUBDIR}")
+  INSTALL(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks-admin.bat" DESTINATION "${Torch_INSTALL_BIN_SUBDIR}")
+ELSE()
+  CONFIGURE_FILE("src/bin/luarocks.in" "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks")
+  CONFIGURE_FILE("src/bin/luarocks-admin.in" "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks-admin")
+  INSTALL(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks" DESTINATION "${Torch_INSTALL_BIN_SUBDIR}")
+  INSTALL(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/src/bin/torch-rocks-admin" DESTINATION "${Torch_INSTALL_BIN_SUBDIR}")
+ENDIF()
