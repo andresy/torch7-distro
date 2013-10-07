@@ -35,6 +35,11 @@ IF(MSVC)
   ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE=1)
 ENDIF(MSVC)
 
+IF(APPLE)
+  SET(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS} -flat_namespace -single_module -undefined dynamic_lookup")
+  SET(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -flat_namespace -single_module -undefined dynamic_lookup")
+ENDIF()
+
 ADD_LIBRARY("paths" SHARED ${src})
 SET_TARGET_PROPERTIES("paths" PROPERTIES
   PREFIX "lib"
@@ -45,7 +50,6 @@ INSTALL(TARGETS paths
   LIBRARY DESTINATION ${LIBDIR}
   RUNTIME DESTINATION ${LIBDIR})
 
-TARGET_LINK_LIBRARIES(paths ${LUA})
-
-# ADD_TORCH_PACKAGE(paths "${src}" "${luasrc}")
-# ADD_TORCH_DOK(dok paths "Fundamentals" "Paths and files utilities" 1.2)
+IF(LUALIB)
+  TARGET_LINK_LIBRARIES(paths ${LUALIB})
+ENDIF()
