@@ -35,15 +35,15 @@ IF(MSVC)
   ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE=1)
 ENDIF(MSVC)
 
-IF(APPLE)
-  SET(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS} -flat_namespace -single_module -undefined dynamic_lookup")
-  SET(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -flat_namespace -single_module -undefined dynamic_lookup")
-ENDIF()
-
-ADD_LIBRARY("paths" SHARED ${src})
+ADD_LIBRARY("paths" MODULE ${src})
 SET_TARGET_PROPERTIES("paths" PROPERTIES
   PREFIX "lib"
   IMPORT_PREFIX "lib")
+
+IF(APPLE)
+  SET_TARGET_PROPERTIES("paths" PROPERTIES
+    LINK_FLAGS "-undefined dynamic_lookup")
+ENDIF()
 
 INSTALL(FILES ${luasrc} DESTINATION ${LUADIR}/paths)
 INSTALL(TARGETS paths
