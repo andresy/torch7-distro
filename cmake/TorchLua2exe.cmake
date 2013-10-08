@@ -8,7 +8,7 @@ MACRO(ADD_TORCH_LUA2EXE lua_exe lua_file)
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${file_name}.c"
     COMMAND lua2exe
     ARGS "${lua_file}" "${CMAKE_CURRENT_BINARY_DIR}/${file_name}.c"
-    DEPENDS lua2exe "${CMAKE_SOURCE_DIR}/cmake/lua2exe/lua2exe.lua")
+    DEPENDS lua2exe "${lua_file}")
 
   IF(WITH_LUA_JIT AND APPLE)
     SET(CMAKE_EXE_LINKER_FLAGS "-pagezero_size 10000 -image_base 100000000 ${CMAKE_EXE_LINKER_FLAGS}")

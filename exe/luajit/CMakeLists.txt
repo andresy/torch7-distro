@@ -259,36 +259,14 @@ target_link_libraries ( liblua-shared ${LIBS} )
 SET_TARGET_PROPERTIES(liblua-shared PROPERTIES 
   PREFIX "lib" IMPORT_PREFIX "lib" OUTPUT_NAME "lua")
 
-add_library ( liblua-static STATIC ${SRC_LJCORE} ${DEPS} )
-target_link_libraries ( liblua-static ${LIBS} )
-SET_TARGET_PROPERTIES(liblua-static PROPERTIES
-  COMPILE_DEFINITIONS "liblua_STATIC"
-  OUTPUT_NAME "lua-static")
-
 add_executable ( lua src/luajit.c)
 target_link_libraries ( lua liblua-shared )
-
-add_executable ( lua-static src/luajit.c)
-target_link_libraries ( lua-static liblua-static )
-SET_TARGET_PROPERTIES(lua-static PROPERTIES
-  COMPILE_DEFINITIONS "liblua_STATIC")
-
 
 INSTALL(TARGETS liblua-shared lua
   EXPORT torch-exports
   RUNTIME DESTINATION "${Lua_INSTALL_BIN_SUBDIR}"
   LIBRARY DESTINATION "${Lua_INSTALL_LIB_SUBDIR}"
   ARCHIVE DESTINATION "${Lua_INSTALL_LIB_SUBDIR}")
-
-# Create internal FindLua.cmake
-SET(LUA_LIBRARIES liblua-shared)
-SET(LUA_EXECUTABLE lua-static)
-SET(LUAC_EXECUTABLE torch-luac)
-SET(LUA_INCLUDE_DIR 
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${LUAJIT_READLINE_INCLUDE})
-CONFIGURE_FILE(cmake/LuaConfig.cmake.in "${Lua_INSTALL_FINDLUA_DIR}/FindLua.cmake")
 
 INSTALL(FILES
   src/jit/bc.lua src/jit/v.lua src/jit/dump.lua src/jit/dis_x86.lua src/jit/dis_x64.lua src/jit/dis_arm.lua
