@@ -44,7 +44,7 @@ for i,a in ipairs(arg) do
    -- version?
    if a == '-v' or a == '-version' then
       print('Torch 7.0  Copyright (C) 2001-2012 Idiap, NEC Labs, NYU')
-      os.execute(paths.concat(paths.install_bin,lua) .. ' -v')
+      os.execute(paths.concat("@Torch_INSTALL_BIN@", lua) .. ' -v')
       os.exit()
    end
    -- use import
@@ -97,8 +97,8 @@ end
 
 -- test qlua existence
 if lua == 'torch-qlua' 
-   and not paths.filep(paths.concat(paths.install_bin,lua))
-   and not paths.filep(paths.concat(paths.install_bin,lua .. ".exe"))
+   and not paths.filep(paths.concat("@Torch_INSTALL_BIN@", lua))
+   and not paths.filep(paths.concat("@Torch_INSTALL_BIN@", lua .. ".exe"))
 then
    print('Unable to find torch-qlua (disabling graphics)')
    print('Fix this by installing Qt4 and rebuilding Torch7')
@@ -120,4 +120,4 @@ if interactive then
 end
 
 -- finally execute main thread, with proper options
-os.execute(paths.concat(paths.install_bin,lua) .. env .. args)
+os.execute(paths.concat("@Torch_INSTALL_BIN@", lua) .. env .. args)
