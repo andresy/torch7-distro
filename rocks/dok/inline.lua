@@ -2,10 +2,9 @@
 -- inline help
 -- that file defines all the tools and goodies to generate inline help
 --------------------------------------------------------------------------------
-dok.inline = {}
+require 'luarocks.cfg'
 
-paths.install_dok = paths.concat(paths.install_html, '..', 'dok')
-paths.install_dokmedia = paths.concat(paths.install_html, '..', 'dokmedia')
+dok.inline = {}
 
 dok.colors = {
    none = '\27[0m',
@@ -159,7 +158,9 @@ local function adddok(...)
    end
    return table.concat(tt,'\n')
 end
+
 function dok.html2funcs(html, package)
+   print('processing -- package', html, package)
    local funcs = {}
    local next = html:gfind('<div class="level%d%s.-".->\n<h%d>(<a.-id=".-">.-</a>)%s*</h%d>(.-)</div>')
    for title,body in next do
@@ -172,51 +173,99 @@ function dok.html2funcs(html, package)
    return funcs
 end
 
-function dok.refresh()
-   for package in paths.files(paths.install_dok) do
-      if package ~= '.' and package ~= '..' and _G[package] then
-         local dir = paths.concat(paths.install_dok, package)
-         for file in paths.files(dir) do
-            if file ~= '.' and file ~= '..' then
-               local path = paths.concat(dir, file)
-               local f = io.open(path)
-               if f then
-                  local content = f:read('*all')
-                  local html = dok.dok2html(content)
-                  local funcs = dok.html2funcs(html, package)
-                  local pkg = _G[package]
-                  if type(pkg) ~= 'table' and _G._torchimport then 
-                     -- unsafe import, use protected import
-                     pkg = _G._torchimport[package]
+local function packageiterator()
+   local co = coroutine.create(
+                               function()
+         local trees = luarocks.cfg.rocks_trees
+                                  for _,tree in ipairs(trees) do
+            if tree.lua_dir then
+               for file in paths.files(tree.lua_dir) do
+                  if file ~= '.' and file ~= '..' then
+                     coroutine.yield(file, paths.concat(tree.lua_dir, file))
                   end
-                  if pkg and type(pkg) == 'table' then
-                     -- level 0: the package itself
-                     dok.inline[pkg] = dok.inline[pkg] or funcs['dok'] or funcs['reference.dok'] or funcs['overview.dok']
-                     -- next levels
-                     for key,symb in pairs(pkg) do
-                        -- level 1: global functions and objects
-                        local entry = (key):lower()
-                        if funcs[entry] or funcs[entry..'.dok'] then
-                           local sym = string2symbol(package .. '.' .. key)
-                           dok.inline[sym] = adddok(funcs[entry..'.dok'],funcs[entry])
+               end
+            end
+         end
+      end)
+
+   return function()
+             local code, res1, res2 = coroutine.resume(co)
+             return res1, res2
+          end
+end
+
+local function mditerator(path)
+   local co = coroutine.create(
+                               function()
+                                  function iterate(path)
+           if path == '.' or path == '..' then
+           elseif paths.filep(path) then
+              if path:match('%.md$') then
+                 coroutine.yield(path)
+              end
+           else
+              for file in paths.files(path) do
+                 if file ~= '.' and file ~= '..' then
+                    iterate(paths.concat(path, file))
+                 end
+              end
+           end
+        end
+                                  iterate(path)
+                               end)
+
+   return function()
+             local code, res = coroutine.resume(co)
+             return res
+          end
+
+end
+
+function dok.refresh()
+   print('REFRESHING')
+   for pkgname, path in packageiterator() do
+      print('DUDEX', pkgname)
+      local pkgtbl = _G[pkgname] or package.loaded[pkgname]
+      if pkgtbl then
+         print('DUDEP', pkgname)
+         for file in mditerator(path) do
+            print('DUDE', file)
+            local f = io.open(file)
+            if f then
+               local content = f:read('*all')
+               local html = dok.dok2html(content)
+               local funcs = dok.html2funcs(html, pkgname)
+               if type(pkgtbl) ~= 'table' and _G._torchimport then 
+                  -- unsafe import, use protected import
+                  pkgtbl = _G._torchimport[pkgname]
+               end
+               if pkgtbl and type(pkgtbl) == 'table' then
+                  -- level 0: the package itself
+                  dok.inline[pkgtbl] = dok.inline[pkgtbl] or funcs['dok'] or funcs['reference.md'] or funcs['overview.md']
+                  -- next levels
+                  for key,symb in pairs(pkgtbl) do
+                     -- level 1: global functions and objects
+                     local entry = (key):lower()
+                     if funcs[entry] or funcs[entry..'.md'] then
+                        local sym = string2symbol(pkgname .. '.' .. key)
+                        dok.inline[sym] = adddok(funcs[entry..'.md'],funcs[entry])
+                     end
+                     -- level 2: objects' methods
+                     if type(pkgtbl[key]) == 'table' then
+                        local entries = {}
+                        for k,v in pairs(pkgtbl[key]) do
+                           entries[k] = v
                         end
-                        -- level 2: objects' methods
-                        if type(pkg[key]) == 'table' then
-                           local entries = {}
-                           for k,v in pairs(pkg[key]) do
-                              entries[k] = v
-                           end
-                           local mt = getmetatable(pkg[key]) or {}
-                           for k,v in pairs(mt) do
-                              entries[k] = v
-                           end
-                           for subkey,subsymb in pairs(entries) do
-                              local entry = (key .. '.' .. subkey):lower()
-                              if funcs[entry] or funcs[entry..'.dok'] then
-                                 local sym = string2symbol(package .. '.' .. key .. '.' .. subkey)
-                                 dok.inline[sym] = adddok(funcs[entry..'.dok'],funcs[entry])
-                                 --dok.inline[string2symbol(package .. '.' .. key .. '.' .. subkey)] = funcs[entry]
-                              end
+                        local mt = getmetatable(pkgtbl[key]) or {}
+                        for k,v in pairs(mt) do
+                           entries[k] = v
+                        end
+                        for subkey,subsymb in pairs(entries) do
+                           local entry = (key .. '.' .. subkey):lower()
+                           if funcs[entry] or funcs[entry..'.md'] then
+                              local sym = string2symbol(pkgname .. '.' .. key .. '.' .. subkey)
+                              dok.inline[sym] = adddok(funcs[entry..'.md'],funcs[entry])
+                              --dok.inline[string2symbol(pkgname .. '.' .. key .. '.' .. subkey)] = funcs[entry]
                            end
                         end
                      end
