@@ -119,7 +119,7 @@ function dok.stylize(html, package)
    styled = styled:gsub('^%s+','')
    -- (1) function title
    styled = '\n' .. style.banner .. '\n' .. styled
-   styled = styled:gsub('<a.-id=".-">%s+(.-)</a>%s*', function(title) return style.title .. title .. style.none .. '\n' end)
+   styled = styled:gsub('<h%d>(.-)</h%d>', function(title) return style.title .. title .. style.none .. '\n' end)
    -- (2) lists
    styled = styled:gsub('<ul>(.-)</ul>', function(list) 
                                             return list:gsub('<li>%s*(.-)%s*</li>%s*', style.list .. '%1\n')
@@ -136,7 +136,7 @@ function dok.stylize(html, package)
    -- (7) images
    styled = styled:gsub('<img.-src="(.-)".->%s*', 
                          style.img .. 'image: file://' 
-                         .. paths.concat(paths.install_dokmedia,package,'%1')
+                         .. paths.concat(package,'%1') -- OUCH DEBUG paths.install_dokmedia,
                          .. style.none .. '\n')
    -- (-) paragraphs
    styled = styled:gsub('<p>', '')
@@ -160,16 +160,91 @@ local function adddok(...)
 end
 
 function dok.html2funcs(html, package)
-   print('processing -- package', html, package)
-   local funcs = {}
-   local next = html:gfind('<div class="level%d%s.-".->\n<h%d>(<a.-id=".-">.-</a>)%s*</h%d>(.-)</div>')
-   for title,body in next do
-      for func in body:gfind('<a name="' .. package .. '%.(.-)">.-</a>') do
-         if func then
-            funcs[func] = adddok(funcs[func],dok.stylize(title .. '\n' .. body:gsub('<a.-name="(.-)"></a>','') , package))
+   print('processing -- package', package)
+   local sections = {level=0}
+   local csection = sections
+   local canchor
+   local lines = {}
+   for line in html:gmatch('[^\n\r]+') do
+      local anchor = line:match('<a.-name="(.-)"/>')
+      local level, name = line:match('<h(%d)>(.*)</h%d>')
+      if anchor then
+         canchor = anchor
+      elseif level and name then
+         if #lines > 0 then
+            table.insert(csection, table.concat(lines, '\n'))
+            lines = {}
+         end
+
+         level = tonumber(level)
+         if level <= csection.level then
+            while level <= csection.level do
+               csection = csection.parent
+            end
+         end
+
+         local subsection = {level=level, parent=csection, name=name, anchor=canchor}
+         table.insert(csection, subsection)
+         csection = subsection
+
+      elseif line:match('^%s+$') then
+      else
+         canchor = nil
+         table.insert(lines, line)
+      end
+   end
+
+   local function printsection(section, txt)
+      if section.level > 0 and section.name then
+         table.insert(txt, string.format('<h%d>%s</h%d>', section.level, section.name, section.level))
+      end
+      if section.anchor then
+--         table.insert(txt, string.format('<a name="%s"/>', section.anchor))
+      end
+      for i=1,#section do
+         if type(section[i]) == 'string' then
+            table.insert(txt, section[i])
+         else
+            printsection(section[i], txt)
          end
       end
    end
+
+   local funcs = {}
+
+   local function traversesection(section)
+      if section.anchor then
+         local txt = {}
+         local key = string.lower(section.anchor):match(package .. '%.(.*)')
+         if key then
+            printsection(section, txt)
+            txt = table.concat(txt, '\n')
+            --         print('************** FOUND', section.anchor, package)
+            --         print(txt)
+            --         print('********************')
+            funcs[key] = adddok(funcs[key], dok.stylize(txt, package))
+         end
+      end
+      for i=1,#section do
+         if type(section[i]) == 'string' then
+         else
+            traversesection(section[i])
+         end
+      end
+   end
+   traversesection(sections)
+
+--   os.exit()
+--   local next = html:gfind('<div class="level%d%s.-".->\n<h%d>(<a.-id=".-">.-</a>)%s*</h%d>(.-)</div>')
+--    local next = html:gfind('<div class="level%d%s.-".->\n<h%d>(<a.-id=".-">.-</a>)%s*</h%d>(.-)</div>')
+--    for title,body in next do
+--       print('T/B', title, body)
+--       for func in body:gfind('<a name="' .. package .. '%.(.-)">.-</a>') do
+--          if func then
+--             funcs[func] = adddok(funcs[func],dok.stylize(title .. '\n' .. body:gsub('<a.-name="(.-)"></a>','') , package))
+--          end
+--       end
+--    end
    return funcs
 end
 
@@ -222,14 +297,10 @@ local function mditerator(path)
 end
 
 function dok.refresh()
-   print('REFRESHING')
    for pkgname, path in packageiterator() do
-      print('DUDEX', pkgname)
       local pkgtbl = _G[pkgname] or package.loaded[pkgname]
       if pkgtbl then
-         print('DUDEP', pkgname)
          for file in mditerator(path) do
-            print('DUDE', file)
             local f = io.open(file)
             if f then
                local content = f:read('*all')
@@ -241,14 +312,15 @@ function dok.refresh()
                end
                if pkgtbl and type(pkgtbl) == 'table' then
                   -- level 0: the package itself
-                  dok.inline[pkgtbl] = dok.inline[pkgtbl] or funcs['dok'] or funcs['reference.md'] or funcs['overview.md']
+                  dok.inline[pkgtbl] = dok.inline[pkgtbl] or funcs['dok'] or funcs['reference.dok'] or funcs['overview.dok']
                   -- next levels
                   for key,symb in pairs(pkgtbl) do
                      -- level 1: global functions and objects
                      local entry = (key):lower()
-                     if funcs[entry] or funcs[entry..'.md'] then
+                     print(entry, funcs[entry] ~= nil)
+                     if funcs[entry] or funcs[entry..'.dok'] then
                         local sym = string2symbol(pkgname .. '.' .. key)
-                        dok.inline[sym] = adddok(funcs[entry..'.md'],funcs[entry])
+                        dok.inline[sym] = adddok(funcs[entry..'.dok'],funcs[entry])
                      end
                      -- level 2: objects' methods
                      if type(pkgtbl[key]) == 'table' then
@@ -262,9 +334,9 @@ function dok.refresh()
                         end
                         for subkey,subsymb in pairs(entries) do
                            local entry = (key .. '.' .. subkey):lower()
-                           if funcs[entry] or funcs[entry..'.md'] then
+                           if funcs[entry] or funcs[entry..'.dok'] then
                               local sym = string2symbol(pkgname .. '.' .. key .. '.' .. subkey)
-                              dok.inline[sym] = adddok(funcs[entry..'.md'],funcs[entry])
+                              dok.inline[sym] = adddok(funcs[entry..'.dok'],funcs[entry])
                               --dok.inline[string2symbol(pkgname .. '.' .. key .. '.' .. subkey)] = funcs[entry]
                            end
                         end
