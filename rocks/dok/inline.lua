@@ -126,11 +126,17 @@ function dok.stylize(html, package)
                                          end)
    -- (3) code
    styled = styled:gsub('%s*<code>%s*(.-)%s*</code>%s*', style.code .. ' %1 ' .. style.none)
+   styled = styled:gsub('%s*<code class%="%S-">%s*(.-)%s*</code>%s*', style.pre .. ' %1 ' .. style.none)
+
    -- (4) pre
    styled = styled:gsub('<pre.->(.-)</pre>', style.pre .. '%1' .. style.none)
+
    -- (5) formatting
    styled = styled:gsub('<em>(.-)</em>', style.em .. '%1' .. style.none)
    styled = styled:gsub('<b>(.-)</b>', style.bold .. '%1' .. style.none)
+   styled = styled:gsub('<strong>(.-)</strong>', style.bold .. '%1' .. style.none)
+   styled = styled:gsub('//(.-)//', style.bold .. '%1' .. style.none)
+
    -- (6) links
    styled = styled:gsub('<a.->(.-)</a>', style.none .. '%1' .. style.none)
    -- (7) images
@@ -139,7 +145,9 @@ function dok.stylize(html, package)
                          .. paths.concat(package,'%1') -- OUCH DEBUG paths.install_dokmedia,
                          .. style.none .. '\n')
    -- (-) paragraphs
-   styled = styled:gsub('<p>', '')
+   styled = styled:gsub('<p>', '\n')
+   styled = styled:gsub('</p>', '')
+
    -- (-) special chars
    styled = uncleanText(styled)
    -- (-) max columns
@@ -160,7 +168,7 @@ local function adddok(...)
 end
 
 function dok.html2funcs(html, package)
-   print('processing -- package', package)
+--   print('processing -- package', package)
    local sections = {level=0}
    local csection = sections
    local canchor
@@ -194,6 +202,12 @@ function dok.html2funcs(html, package)
       end
    end
 
+   -- deal with remaining lines
+   if #lines > 0 then
+      table.insert(csection, table.concat(lines, '\n'))
+      lines = {}
+   end
+
    local function printsection(section, txt)
       if section.level > 0 and section.name then
          table.insert(txt, string.format('<h%d>%s</h%d>', section.level, section.name, section.level))
@@ -205,7 +219,7 @@ function dok.html2funcs(html, package)
          if type(section[i]) == 'string' then
             table.insert(txt, section[i])
          else
-            printsection(section[i], txt)
+--            printsection(section[i], txt) -- do not include sub-sections in there, bouh
          end
       end
    end
@@ -317,7 +331,7 @@ function dok.refresh()
                   for key,symb in pairs(pkgtbl) do
                      -- level 1: global functions and objects
                      local entry = (key):lower()
-                     print(entry, funcs[entry] ~= nil)
+--                     print(entry, funcs[entry] ~= nil)
                      if funcs[entry] or funcs[entry..'.dok'] then
                         local sym = string2symbol(pkgname .. '.' .. key)
                         dok.inline[sym] = adddok(funcs[entry..'.dok'],funcs[entry])
