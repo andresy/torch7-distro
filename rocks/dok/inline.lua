@@ -4,6 +4,8 @@
 --------------------------------------------------------------------------------
 require 'luarocks.cfg'
 
+local knownpkg = {}
+
 dok.inline = {}
 
 dok.colors = {
@@ -313,7 +315,8 @@ end
 function dok.refresh()
    for pkgname, path in packageiterator() do
       local pkgtbl = _G[pkgname] or package.loaded[pkgname]
-      if pkgtbl then
+      if pkgtbl and not knownpkg[pkgname] then
+         knownpkg[pkgname] = true
          for file in mditerator(path) do
             local f = io.open(file)
             if f then
