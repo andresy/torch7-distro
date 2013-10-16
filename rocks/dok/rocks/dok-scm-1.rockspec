@@ -16,6 +16,7 @@ description = {
 
 dependencies = {
    "lua >= 5.1",
+   "sundown >= 1.0"
 }
 
 build = {
