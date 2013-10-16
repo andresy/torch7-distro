@@ -605,9 +605,9 @@ pkg.parallel = {
 <a name="install.binary"/>
 # Installing from binaries #
 
-__ This section is not applicable now as we have not produced binaries yet. __
+__This section is not applicable now as we have not produced binaries yet.__
 
-__ Please [install from sources](#install.sources). __
+__Please [install from sources](#install.sources).__
 
 
 
