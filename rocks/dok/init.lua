@@ -2,8 +2,6 @@ local sd = require 'sundown'
 
 dok = {}
 
-if torch then
-   require 'dok.inline'
-end
+require 'dok.inline'
 
 dok.dok2html = sd.render
