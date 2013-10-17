@@ -16,8 +16,8 @@ or above is suggested for full support of all functionality.
 
 By default, plot package will search for terminal in following order
   * ` windows ` terminal if operating system is windows
-  * ` wxt `, ` x11 `  terminal if operating system is linux
-  * ` aqua `, `wxt`, ` x11 ` terminal if operating system is mac
+  * ` wxt `, ` qt `, ` x11 `  terminal if operating system is linux
+  * ` aqua `, `wxt`, ` qt `, ` x11 ` terminal if operating system is mac
 
 It is also possible to manually set any terminal type using
 [gnuplot.setterm](#gnuplot.setterm). Interactivity is
@@ -184,12 +184,11 @@ gnuplot.plot({yy,' filledcurves'},{x,yp,'lines ls 1'},{x,ym,'lines ls 1'},{x,y,'
 <a name="gnuplot.surface.dok"/>
 ## Plotting 3D Surfaces ##
 
-Surface plotting creates a 3D surface plot of a given matrix '' z
-`. Entries of ` z '' are used as height values. It is also possible
-to specify ` x ` and ` y ` locations corresponding to each point
-in ` z `. If a terminal with interactive capabilities is being used
-by `Gnuplot` backend (like `x11` or `wxt`), then rotating,
-zooming is also possible.
+Surface plotting creates a 3D surface plot of a given matrix `z`. Entries
+of `z` are used as height values. It is also possible to specify `x` and
+`y` locations corresponding to each point in `z` . If a terminal with
+interactive capabilities is being used by `Gnuplot` backend (like `x11` or
+`wxt` or `qt`), then rotating, zooming is also possible.
 
 <a name="gnuplot.splot"/>
 ### gnuplot.splot(z) ###
@@ -258,9 +257,10 @@ gnuplot.hist(torch.randn(100000),100)
 <a name="gnuplot.files.dok"/>
 ## Plotting Directly into Files ##
 
-Any of the above plotting utilities can also be used for directly
-plotting into `eps` or `png` files. A final gnuplot.plotflush()
-command ensures that all output is written to the file properly.
+Any of the above plotting utilities can also be used for directly plotting
+into `eps` or `png` files, or `pdf` files if your gnuplot installation
+allows. A final gnuplot.plotflush() command ensures that all output is
+written to the file properly.
 
 ```lua
 gnuplot.epsfigure('test.eps')
@@ -274,7 +274,7 @@ gnuplot.plotflush()
 ## Common Operations ##
 
 It is possible to manage multiple plots at a time, printing plots to
-png, or eps files or creating plots directly on png or eps files.
+png, eps or pdf files or creating plots directly on png or eps or pdf files.
 
 There are also several handy operations for decorating plots which are
 common to many of the plotting functions.
@@ -307,13 +307,29 @@ skipped, a new figure is created with the next consecutive id.
 ### gnuplot.epsfigure(fname) ###
 
 Creates a figure directly on the `eps` file given with
-`fname`. This uses `Gnuplot` terminal `postscricpt eps enhanced color`.
+`fname`. This uses `Gnuplot` terminal `postscript eps enhanced color`.
+
+<a name="gnuplot.pdffigure"/>
+###  gnuplot.pdffigure(fname) ###
+
+Only available if your installation of gnuplot has been compiled
+with `pdf` support enabled.
+
+Creates a figure directly on the `pdf` file given with
+`fname`. This uses `Gnuplot` terminal `pdf enhanced color`,
+or `pdfcairo enhanced color` if available.
 
 <a name="gnuplot.pngfigure"/>
 ### gnuplot.pngfigure(fname) ###
 
 Creates a figure directly on the `png` file given with
 `fname`. This uses `Gnuplot` terminal `png`.
+
+<a name="gnuplot.svgfigure"/>
+###  gnuplot.svgfigure(fname) ###
+
+Creates a figure directly on the `svg` file given with `fname`. This uses
+`Gnuplot` terminal `svg`.
 
 <a name="gnuplot.plotflush"/>
 ### gnuplot.plotflush([n]) ###
@@ -324,8 +340,9 @@ flushing file based terminals.
 <a name="gnuplot.figprint"/>
 ### gnuplot.figprint(fname) ###
 
-Prints the current figure to the given file with name `fname`. Only
-`png` or `eps` files are supported.
+Prints the current figure to the given file with name `fname`. Only `png`
+or `eps` files are supported by default. If your gnuplot installation
+allows, `pdf` files are also supported.
 
 <a name="gnuplot.xlabel"/>
 ### gnuplot.xlabel(label) ###
